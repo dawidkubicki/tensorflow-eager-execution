@@ -18,11 +18,14 @@ def clean_text(text):
     return text
 
 train_data["text"] = train_data["text"].apply(lambda x: clean_text(x)) 
+valid_data["text"] = valid_data["text"].apply(lambda x: clean_text(x))
+
+print(train_data["text"].head())
+print(valid_data["text"].head())
 
 X_train = train_data["text"]
 y_train = train_data["label"]
 
 X_valid = valid_data["text"]
 y_valid = valid_data["label"]
-
 
