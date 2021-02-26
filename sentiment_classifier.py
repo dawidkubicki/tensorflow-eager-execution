@@ -29,9 +29,9 @@ y_train = train_data["label"]
 X_valid = valid_data["text"]
 y_valid = valid_data["label"]
 
-X_train = tf.convert_to_tensor(X_train)
+#X_train = tf.convert_to_tensor(X_train)
 y_train = tf.convert_to_tensor(y_train)
-X_valid = tf.convert_to_tensor(X_valid)
+#X_valid = tf.convert_to_tensor(X_valid)
 y_valid = tf.convert_to_tensor(y_valid)
 
 #embedding hyperparameters
@@ -41,9 +41,15 @@ sequence_length = 100
 emb_dim = 256
 rnn_units = 128
 
+max_len=400
 
-#TODO
-#implement tokenizer, text_to_sequences, pad_sequences
+tokenizer=tf.keras.preprocessing.text.Tokenizer(num_words=max_len, lower=False)
+tokenizer.fit_on_texts(X_train)
+
+X_train_token = tokenizer.texts_to_sequences(X_train)
+X_train=tf.keras.preprocessing.sequence.pad_sequences(X_train_token,maxlen=max_len)
+
+print(X_train.shape)
 
 train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train)).shuffle(10000).batch(32)
 valid_ds = tf.data.Dataset.from_tensor_slices((X_valid, y_valid)).shuffle(10000).batch(32)
