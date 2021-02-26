@@ -29,3 +29,39 @@ y_train = train_data["label"]
 X_valid = valid_data["text"]
 y_valid = valid_data["label"]
 
+X_train = tf.convert_to_tensor(X_train)
+y_train = tf.convert_to_tensor(y_train)
+X_valid = tf.convert_to_tensor(X_valid)
+y_valid = tf.convert_to_tensor(y_valid)
+
+#embedding hyperparameters
+
+vocab_size = 10000
+sequence_length = 100
+emb_dim = 256
+rnn_units = 128
+
+vectorize_layer = tf.keras.layers.experimental.preprocessing.TextVectorization(
+        max_tokens=vocab_size,
+        output_mode='int',
+        output_sequence_length=sequence_length)
+
+vectorize_layer.adapt(X_train)
+
+train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train)).shuffle(10000).batch(32)
+valid_ds = tf.data.Dataset.from_tensor_slices((X_valid, y_valid)).shuffle(10000).batch(32)
+
+class MyModel(tf.keras.Model):
+    def __init__(self, vocab_size, emb_dim, rnn_units):
+        super(MyModel, self).__init__()
+        self.emb = tf.keras.layers.Embedding(vocab_size, emb_dim)
+        self.lstm = tf.keras.layers.LSTM(rnn_units, activation='relu')
+        self.d1 = tf.keras.layers.Dense(2)
+
+    def call(self, x):
+        x = self.emb(x)
+        x = self.lstm(x)
+        return  self.d1(x)
+
+
+model = MyModel(vocab_size, emb_dim, rnn_units)
