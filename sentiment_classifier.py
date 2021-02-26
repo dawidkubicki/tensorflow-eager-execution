@@ -41,12 +41,9 @@ sequence_length = 100
 emb_dim = 256
 rnn_units = 128
 
-vectorize_layer = tf.keras.layers.experimental.preprocessing.TextVectorization(
-        max_tokens=vocab_size,
-        output_mode='int',
-        output_sequence_length=sequence_length)
 
-vectorize_layer.adapt(X_train)
+#TODO
+#implement tokenizer, text_to_sequences, pad_sequences
 
 train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train)).shuffle(10000).batch(32)
 valid_ds = tf.data.Dataset.from_tensor_slices((X_valid, y_valid)).shuffle(10000).batch(32)
@@ -65,3 +62,48 @@ class MyModel(tf.keras.Model):
 
 
 model = MyModel(vocab_size, emb_dim, rnn_units)
+
+
+#loss and optimizer
+
+loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+optimizer = tf.keras.optimizers.Adam()
+
+
+train_loss = tf.keras.metrics.Mean(name='train_loss')
+train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
+
+test_loss = tf.keras.metrics.Mean(name='test_loss')
+test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='test_accuracy')
+
+
+
+
+@tf.function
+def train_step(text, label):
+	with tf.GradientTape() as tape:
+		predictions = model(text, training=True)
+		loss = loss_object(label, predictions)
+	gradients = tape.gradient(loss, model.trainable_variables)
+	optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
+	train_loss(loss)
+	train_accuracy(label, predictions)
+
+
+EPOCHS=5
+
+for epoch in range(EPOCHS):
+    train_loss.reset_states()
+    train_accuracy.reset_states()
+    test_loss.reset_states()
+    test_accuracy.reset_states()
+    
+    for text, labels in train_ds:
+        train_step(text, labels)
+
+    print(
+        f'Epoch {epoch + 1}, '
+        f'Loss {train_loss.result()}, '
+        f'Accuracy {train_accuracy.result()*100}'
+            )
